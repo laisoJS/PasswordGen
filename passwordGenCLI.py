@@ -20,6 +20,7 @@ def generate_password(length, include_uppercase, include_lowercase, include_numb
 
     return ''.join(random.choice(characters) for _ in range(length))
 
+
 def main():
     parser = argparse.ArgumentParser(description='Password Generator')
     parser.add_argument('-l', '--length', type=int, default=8, help='Length of the password (default: 8)')
@@ -30,12 +31,14 @@ def main():
     parser.add_argument('-q', '--quantity', type=int, default=1, help='Number of passwords to generate (default: 1)')
     parser.add_argument('-o', '--output', default='passwords.txt', help='Output file name')
     parser.add_argument('-z', '--zip', action='store_true', help='Create a .tar.gz file')
+    parser.add_argument('--sep', type=int, default=1, help='Number of files to create')
 
     args = parser.parse_args()
 
     try:
         length = max(args.length, 8)
         num_passwords = max(args.quantity, 1)
+        num_files = max(args.sep, 1)
 
         include_uppercase = args.upper or (not any([args.upper, args.lower, args.numbers, args.symbols]))
         include_lowercase = args.lower or (not any([args.upper, args.lower, args.numbers, args.symbols]))
@@ -44,26 +47,34 @@ def main():
 
         filename = args.output
 
-        with open(filename, "a+") as file:
-            generated_passwords = {password.strip() for password in file}
+        passwords = [
+            generate_password(length, include_uppercase, include_lowercase, include_numbers, include_symbols)
+            for _ in range(num_passwords)
+        ]
 
-            while num_passwords > len(generated_passwords):
-                password = generate_password(length, include_uppercase, include_lowercase,
-                                             include_numbers, include_symbols)
-                if password not in generated_passwords:
-                    file.write(password + "\n")
-                    generated_passwords.add(password)
+        passwords_per_file = (num_passwords + num_files - 1) // num_files
+
+        for i in range(num_files):
+            start_idx = i * passwords_per_file
+            end_idx = min((i + 1) * passwords_per_file, num_passwords)
+            file_passwords = passwords[start_idx:end_idx]
+
+            file_name = f"{filename}_{i + 1}.txt"
+            with open(file_name, 'w') as file:
+                file.writelines('%s\n' % password for password in file_passwords)
 
         if args.zip:
-            zip_filename = os.path.join(args.output + '.tar.gz')
-            with tarfile.open(zip_filename, 'w:gz') as tar:
-                tar.add(filename, arcname=os.path.basename(filename))
-                os.remove(filename)
+            with tarfile.open(f'{args.output}.tar.gz', 'w:gz') as tar:
+                for i in range(num_files):
+                    file_name = f"{filename}_{i + 1}.txt"
+                    tar.add(file_name, arcname=os.path.basename(file_name))
 
     except ValueError:
         print(ERROR_MESSAGE["TooSmall"])
-    except FileNotFoundError:
-        print(ERROR_MESSAGE["FileCreationError"])
+    except IOError as e:
+        print(ERROR_MESSAGE["FileCreationError"], e)
+
 
 if __name__ == "__main__":
     main()
+
