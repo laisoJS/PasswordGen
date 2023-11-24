@@ -1,76 +1,69 @@
 import random
 import string
+import argparse
+import tarfile
+import os
 
 ERROR_MESSAGE = {
-    "ValueError": "ERROR: Please enter a valid number",
     "TooSmall": "ERROR: The minimum password length is 8 characters",
-    "InvalidChoice": "ERROR: Please enter 'yes' or 'no'",
     "ZeroPasswords": "ERROR: Please enter a number greater than 0",
+    "FileCreationError": "ERROR: Unable to create the file",
 }
 
-
 def generate_password(length, include_uppercase, include_lowercase, include_numbers, include_symbols):
-    characters = ''
-    if include_uppercase:
-        characters += string.ascii_uppercase
-    if include_lowercase:
-        characters += string.ascii_lowercase
-    if include_numbers:
-        characters += string.digits
-    if include_symbols:
-        characters += string.punctuation
+    characters = ''.join([
+        string.ascii_uppercase if include_uppercase else '',
+        string.ascii_lowercase if include_lowercase else '',
+        string.digits if include_numbers else '',
+        string.punctuation if include_symbols else '',
+    ])
 
     return ''.join(random.choice(characters) for _ in range(length))
 
+def main():
+    parser = argparse.ArgumentParser(description='Password Generator')
+    parser.add_argument('-l', '--length', type=int, default=8, help='Length of the password (default: 8)')
+    parser.add_argument('-u', '--upper', action='store_true', help='Include uppercase letters')
+    parser.add_argument('-w', '--lower', action='store_true', help='Include lowercase letters')
+    parser.add_argument('-n', '--numbers', action='store_true', help='Include numbers')
+    parser.add_argument('-s', '--symbols', action='store_true', help='Include symbols')
+    parser.add_argument('-q', '--quantity', type=int, default=1, help='Number of passwords to generate (default: 1)')
+    parser.add_argument('-o', '--output', default='passwords.txt', help='Output file name')
+    parser.add_argument('-z', '--zip', action='store_true', help='Create a .tar.gz file')
 
-while True:
+    args = parser.parse_args()
+
     try:
-        length = int(input("Length of the password (min 8): "))
+        length = max(args.length, 8)
+        num_passwords = max(args.quantity, 1)
 
-        if length < 8:
-            print(ERROR_MESSAGE["TooSmall"])
-            continue  # Restart the loop to re-prompt for the length
+        include_uppercase = args.upper or (not any([args.upper, args.lower, args.numbers, args.symbols]))
+        include_lowercase = args.lower or (not any([args.upper, args.lower, args.numbers, args.symbols]))
+        include_numbers = args.numbers or (not any([args.upper, args.lower, args.numbers, args.symbols]))
+        include_symbols = args.symbols or (not any([args.upper, args.lower, args.numbers, args.symbols]))
 
-        include_uppercase = input("Include uppercase letters? (y/n): ").lower() in ['yes', 'y']
-        include_lowercase = input("Include lowercase letters? (y/n): ").lower() in ['yes', 'y']
-        include_numbers = input("Include numbers? (y/n): ").lower() in ['yes', 'y']
-        include_symbols = input("Include symbols? (y/n): ").lower() in ['yes', 'y']
+        filename = args.output
 
-        if not (include_uppercase or include_lowercase or include_numbers or include_symbols):
-            print("Please select at least one type of character.")
-            continue  # Restart the loop for character type selection
+        with open(filename, "a+") as file:
+            generated_passwords = {password.strip() for password in file}
 
-        dosave = input("Do you want to save the password (y/n)? ").lower()
+            while num_passwords > len(generated_passwords):
+                password = generate_password(length, include_uppercase, include_lowercase,
+                                             include_numbers, include_symbols)
+                if password not in generated_passwords:
+                    file.write(password + "\n")
+                    generated_passwords.add(password)
 
-        if dosave not in ["yes", "y", "no", "n"]:
-            print(ERROR_MESSAGE["InvalidChoice"])
-            continue  # Restart the loop to re-prompt for saving choice
-
-        if dosave in ["yes", "y"]:
-            num_passwords = int(input("How many passwords do you want to create? "))
-
-            if num_passwords <= 0:
-                print(ERROR_MESSAGE["ZeroPasswords"])
-                continue  # Restart the loop for a valid number of passwords
-
-            filename = input("Name of file to store the password: ").lower() + ".txt"
-
-            with open(filename, "a+") as file:
-                file.seek(0)
-                generated_passwords = set(password.strip() for password in file.readlines())
-
-                while num_passwords > len(generated_passwords):
-                    password = generate_password(length, include_uppercase, include_lowercase, include_numbers,
-                                                 include_symbols)
-                    if password not in generated_passwords:
-                        file.write(password + "\n")
-                        generated_passwords.add(password)
-
-                break
-        else:
-            password = generate_password(length, include_uppercase, include_lowercase, include_numbers, include_symbols)
-            print("Generated Password:", password)
-            break
+        if args.zip:
+            zip_filename = os.path.join(args.output + '.tar.gz')
+            with tarfile.open(zip_filename, 'w:gz') as tar:
+                tar.add(filename, arcname=os.path.basename(filename))
+                os.remove(filename)
 
     except ValueError:
-        print(ERROR_MESSAGE["ValueError"])
+        print(ERROR_MESSAGE["TooSmall"])
+    except FileNotFoundError:
+        print(ERROR_MESSAGE["FileCreationError"])
+
+if __name__ == "__main__":
+    main()
