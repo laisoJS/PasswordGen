@@ -1,14 +1,10 @@
-import string
 import random
-import PySimpleGUI as sg
+import string
 
 ERROR_MESSAGE = {
-    "ValueError": "ERROR: Please enter a valid number",
     "TooSmall": "ERROR: The minimum password length is 8 characters",
-    "InvalidChoice": "ERROR: Please enter 'yes' or 'no'",
     "ZeroPasswords": "ERROR: Please enter a number greater than 0",
 }
-
 
 def generate_password(length, include_uppercase, include_lowercase, include_numbers, include_symbols):
     characters = ''
@@ -23,75 +19,81 @@ def generate_password(length, include_uppercase, include_lowercase, include_numb
 
     return ''.join(random.choice(characters) for _ in range(length))
 
-
-layout = [
-    [sg.Text("Length of the password (min 8): "), sg.InputText(key='length')],
-    [sg.Text("Include uppercase letters? "), sg.Radio("Yes", "uppercase", key='uppercase'),
-     sg.Radio("No", "uppercase", default=True)],
-    [sg.Text("Include lowercase letters? "), sg.Radio("Yes", "lowercase", key='lowercase'),
-     sg.Radio("No", "lowercase", default=True)],
-    [sg.Text("Include numbers? "), sg.Radio("Yes", "numbers", key='numbers'), sg.Radio("No", "numbers", default=True)],
-    [sg.Text("Include symbols? "), sg.Radio("Yes", "symbols", key='symbols'), sg.Radio("No", "symbols", default=True)],
-    [sg.Text("Do you want to save the password? "), sg.Radio("Yes", "save", key='save'),
-     sg.Radio("No", "save", default=True)],
-    [sg.Text("How many passwords do you want to create? "), sg.InputText(key='num_passwords')],
-    [sg.Text("Name of file to store the password: "), sg.InputText(key='filename')],
-    [sg.Button("Generate Password")]
-]
-
-window = sg.Window("Password Generator", layout)
-
-while True:
-    event, values = window.read()
-
-    if event == sg.WINDOW_CLOSED:
-        break
-
+def generate_passwords(length, include_uppercase, include_lowercase, include_numbers, include_symbols,
+                       num_passwords, separate_files, num_files, file_name):
     try:
-        length = int(values['length'])
+        with open(file_name, "a+") as file:
+            file.seek(0)
+            generated_passwords = set(password.strip() for password in file.readlines())
 
-        if length < 8:
-            sg.popup(ERROR_MESSAGE["TooSmall"])
-            continue  # Restart the loop to re-prompt for the length
+            while num_passwords > len(generated_passwords):
+                password = generate_password(length, include_uppercase, include_lowercase, include_numbers,
+                                             include_symbols)
+                if password not in generated_passwords:
+                    file.write(password + "\n")
+                    generated_passwords.add(password)
 
-        include_uppercase = values['uppercase']
-        include_lowercase = values['lowercase']
-        include_numbers = values['numbers']
-        include_symbols = values['symbols']
-        save_password = values['save']
+        if separate_files and num_files > 1:
+            passwords = list(generated_passwords)
+            passwords_per_file = (num_passwords + num_files - 1) // num_files
 
-        if not (include_uppercase or include_lowercase or include_numbers or include_symbols):
-            sg.popup("Please select at least one type of character.")
-            continue  # Restart the loop for character type selection
+            for i in range(num_files):
+                start_idx = i * passwords_per_file
+                end_idx = min((i + 1) * passwords_per_file, num_passwords)
 
-        if save_password:
-            num_passwords = int(values['num_passwords'])
+                file_suffix = f"_{i + 1}" if num_files > 1 else ""
 
-            if num_passwords <= 0:
-                sg.popup(ERROR_MESSAGE["ZeroPasswords"])
-                continue  # Restart the loop for a valid number of passwords
+                new_file_name = f"{file_name}{file_suffix}.txt"
 
-            filename = values['filename'] + ".txt"
-            generated_passwords = set()
-
-            with open(filename, "a+") as file:
-                file.seek(0)
-                generated_passwords = set(password.strip() for password in file.readlines())
-
-                while num_passwords > len(generated_passwords):
-                    password = generate_password(length, include_uppercase, include_lowercase, include_numbers,
-                                                 include_symbols)
-                    if password not in generated_passwords:
-                        file.write(password + "\n")
-                        generated_passwords.add(password)
-
-                sg.popup(f"{num_passwords} passwords generated and saved in {filename}")
-
-        else:
-            password = generate_password(length, include_uppercase, include_lowercase, include_numbers, include_symbols)
-            sg.popup(f"Generated Password: {password}")
+                with open(new_file_name, 'w') as file:
+                    file_passwords = passwords[start_idx:end_idx]
+                    file.writelines('%s\n' % password for password in file_passwords)
 
     except ValueError:
-        sg.popup(ERROR_MESSAGE["ValueError"])
+        print(ERROR_MESSAGE["TooSmall"])
+    except IOError:
+        print("Unable to create the file.")
 
-window.close()
+def get_yes_no_input(prompt):
+    while True:
+        user_input = input(prompt).lower()
+        if user_input in ['yes', 'no', 'y', 'n']:
+            return user_input == 'yes' or user_input == 'y'
+        else:
+            print("Invalid choice. Please enter 'yes' or 'no'.")
+
+def generate_passwords_cli():
+    try:
+        length = int(input("Length of the password (min 8): "))
+        if length < 8:
+            print(ERROR_MESSAGE["TooSmall"])
+            return
+
+        include_uppercase = get_yes_no_input("Include uppercase letters? (yes/no): ")
+        include_lowercase = get_yes_no_input("Include lowercase letters? (yes/no): ")
+        include_numbers = get_yes_no_input("Include numbers? (yes/no): ")
+        include_symbols = get_yes_no_input("Include symbols? (yes/no): ")
+
+        separate_files = get_yes_no_input("Do you want to separate your file? (yes/no): ")
+        if separate_files:
+            num_files = int(input("How many files do you want to create? "))
+        else:
+            num_files = 1
+
+        file_name = input("Name of file to store the password (press Enter for default 'password.txt'): ").strip()
+        if file_name == "":
+            file_name = "password.txt"
+
+        num_passwords = int(input("How many passwords do you want to create? "))
+
+        generate_passwords(length, include_uppercase, include_lowercase, include_numbers, include_symbols,
+                           num_passwords, separate_files, num_files, file_name)
+
+    except ValueError:
+        print(ERROR_MESSAGE["TooSmall"])
+    except IOError:
+        print("Unable to create the file.")
+
+
+if __name__ == "__main__":
+    generate_passwords_cli()
