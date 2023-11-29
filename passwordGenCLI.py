@@ -4,6 +4,7 @@ import random
 import string
 import tarfile
 
+
 ERROR_MESSAGE = {
     "TooSmall": "ERROR: The minimum password length is 8 characters",
     "ZeroPasswords": "ERROR: Please enter a number greater than 0",
@@ -12,6 +13,27 @@ ERROR_MESSAGE = {
 
 
 def generate_password(length, include_uppercase, include_lowercase, include_numbers, include_symbols):
+    """
+    Generate a random password based on given parameters.
+
+    :param length: Length of the password
+    :type length: int
+
+    :param include_uppercase: Include uppercase letters
+    :type include_uppercase: bool
+
+    :param include_lowercase: Include lowercase letters
+    :type include_lowercase: bool
+
+    :param include_numbers: Include numbers
+    :type include_numbers: bool
+
+    :param include_symbols: Include symbols
+    :type include_symbols: bool
+
+    :return: Generated password
+    :rtype: str
+    """
     characters = ''.join([
         string.ascii_uppercase if include_uppercase else '',
         string.ascii_lowercase if include_lowercase else '',
@@ -23,6 +45,10 @@ def generate_password(length, include_uppercase, include_lowercase, include_numb
 
 
 def main():
+    """
+    Main function to execute password generation based on command-line arguments.
+    Parses arguments and generates passwords accordingly.
+    """
     parser = argparse.ArgumentParser(description='Password Generator')
     parser.add_argument('-l', '--length', type=int, default=8, help='Length of the password (default: 8)')
     parser.add_argument('-u', '--upper', action='store_true', help='Include uppercase letters')
