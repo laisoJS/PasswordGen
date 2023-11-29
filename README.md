@@ -1,13 +1,13 @@
 # PasswordGenCLI
 
-This script generates random passwords based on specified criteria.
+This repository includes scripts to generate random passwords based on specified criteria, available in both command-line interface (CLI) and graphical user interface (GUI) versions.
 
 ## Usage
 
 ### Prerequisites
 - Python 3.x installed
 
-### Running the Script
+### Running the Scripts
 
 1. **Clone the repository:**
     ```bash
@@ -19,7 +19,7 @@ This script generates random passwords based on specified criteria.
     cd PasswordGen
     ```
 
-3. **Run the script with required arguments:**
+3. **Run the CLI script with required arguments:**
     ```bash
     python passwordGenCLI.py [-h] [-l LENGTH] [-u] [-w] [-n] [-s] [-q QUANTITY] [-o OUTPUT] [--sep SEP] [-z]
     ```
@@ -35,29 +35,11 @@ This script generates random passwords based on specified criteria.
     - `--sep SEP`: Number of files to create (default: 1).
     - `-z`, `--zip`: Create a .tar.gz file.
 
-### Examples
+### Running the GUI
 
-- Generate a password with default settings:
-    ```bash
-    python passwordGenCLI.py
-    ```
+To run the GUI version (`passwordGenGUI.py`), execute the following command:
 
-- Generate a password with specific criteria:
-    ```bash
-    python passwordGenCLI.py --length 12 --upper --numbers --symbols
-    ```
-
-- Generate multiple passwords into separate files:
-    ```bash
-    python passwordGenCLI.py --quantity 10 --sep 3
-    ```
-
-- Generate passwords and create a compressed file:
-    ```bash
-    python passwordGenCLI.py --length 10 --upper --numbers --zip
-    ```
-
-### Notes
-
-- Passwords will be saved in a text file (`passwords.txt` by default) unless the `-z` flag is used to create a compressed `.tar.gz` file.
-- Ensure a minimum length of 8 characters for passwords.
+```bash
+python passwordGenGUI.py
+```
+This project is licensed under the [MIT](https://en.wikipedia.org/wiki/MIT_License) License - see the LICENSE file for details.
