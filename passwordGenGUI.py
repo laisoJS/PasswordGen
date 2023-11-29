@@ -1,99 +1,81 @@
+import os
 import random
 import string
+import tarfile
+
 
 ERROR_MESSAGE = {
     "TooSmall": "ERROR: The minimum password length is 8 characters",
     "ZeroPasswords": "ERROR: Please enter a number greater than 0",
+    "FileCreationError": "ERROR: Unable to create the file",
 }
 
+
 def generate_password(length, include_uppercase, include_lowercase, include_numbers, include_symbols):
-    characters = ''
-    if include_uppercase:
-        characters += string.ascii_uppercase
-    if include_lowercase:
-        characters += string.ascii_lowercase
-    if include_numbers:
-        characters += string.digits
-    if include_symbols:
-        characters += string.punctuation
+    characters = ''.join([
+        string.ascii_uppercase if include_uppercase else '',
+        string.ascii_lowercase if include_lowercase else '',
+        string.digits if include_numbers else '',
+        string.punctuation if include_symbols else '',
+    ])
 
     return ''.join(random.choice(characters) for _ in range(length))
 
-def generate_passwords(length, include_uppercase, include_lowercase, include_numbers, include_symbols,
-                       num_passwords, separate_files, num_files, file_name):
+
+def get_user_input(prompt, default=None):
+    if default:
+        return input(f"{prompt} [{default}]: ") or default
+    else:
+        return input(f"{prompt}: ")
+
+
+def main():
     try:
-        with open(file_name, "a+") as file:
-            file.seek(0)
-            generated_passwords = set(password.strip() for password in file.readlines())
+        length = max(int(get_user_input('Length of the password', default=8)), 8)
+        include_uppercase = get_user_input('Include uppercase letters? (y/n)') == 'y'
+        include_lowercase = get_user_input('Include lowercase letters? (y/n)') == 'y'
+        include_numbers = get_user_input('Include numbers? (y/n)') == 'y'
+        include_symbols = get_user_input('Include symbols? (y/n)') == 'y'
+        num_passwords = max(int(get_user_input('Number of passwords to generate', default=1)), 1)
+        num_files = max(int(get_user_input('Number of files to create', default=1)), 1)
+        create_zip = get_user_input('Zip the file as .tar.gz? (y/n)') == 'y'
+        output_filename = get_user_input('Output file name', default='password')
 
-            while num_passwords > len(generated_passwords):
-                password = generate_password(length, include_uppercase, include_lowercase, include_numbers,
-                                             include_symbols)
-                if password not in generated_passwords:
-                    file.write(password + "\n")
-                    generated_passwords.add(password)
+        passwords = [
+            generate_password(length, include_uppercase, include_lowercase, include_numbers, include_symbols)
+            for _ in range(num_passwords)
+        ]
 
-        if separate_files and num_files > 1:
-            passwords = list(generated_passwords)
-            passwords_per_file = (num_passwords + num_files - 1) // num_files
+        passwords_per_file = (num_passwords + num_files - 1) // num_files
 
+        for i in range(num_files):
+            file_suffix = f"_{i + 1}" if num_files > 1 else ''
+            file_name = f"{output_filename}{file_suffix}.txt" if num_files > 1 else f"{output_filename}.txt"
+
+            with open(file_name, 'w') as file:
+                file_passwords = passwords[i * passwords_per_file:(i + 1) * passwords_per_file]
+                file.writelines('%s\n' % password for password in file_passwords)
+
+        if create_zip:
+            with tarfile.open(f'{output_filename}.tar.gz', 'w:gz') as tar:
+                for i in range(num_files):
+                    file_suffix = f"_{i + 1}" if num_files > 1 else ''
+                    file_name = f"{output_filename}{file_suffix}.txt" if num_files > 1 else f"{output_filename}.txt"
+
+                    tar.add(file_name, arcname=os.path.basename(file_name))
+
+            # Clean up: remove individual text files after zipping
             for i in range(num_files):
-                start_idx = i * passwords_per_file
-                end_idx = min((i + 1) * passwords_per_file, num_passwords)
+                file_suffix = f"_{i + 1}" if num_files > 1 else ''
+                file_name = f"{output_filename}{file_suffix}.txt" if num_files > 1 else f"{output_filename}.txt"
 
-                file_suffix = f"_{i + 1}" if num_files > 1 else ""
-
-                new_file_name = f"{file_name}{file_suffix}.txt"
-
-                with open(new_file_name, 'w') as file:
-                    file_passwords = passwords[start_idx:end_idx]
-                    file.writelines('%s\n' % password for password in file_passwords)
+                os.remove(file_name)
 
     except ValueError:
         print(ERROR_MESSAGE["TooSmall"])
-    except IOError:
-        print("Unable to create the file.")
-
-def get_yes_no_input(prompt):
-    while True:
-        user_input = input(prompt).lower()
-        if user_input in ['yes', 'no', 'y', 'n']:
-            return user_input == 'yes' or user_input == 'y'
-        else:
-            print("Invalid choice. Please enter 'yes' or 'no'.")
-
-def generate_passwords_cli():
-    try:
-        length = int(input("Length of the password (min 8): "))
-        if length < 8:
-            print(ERROR_MESSAGE["TooSmall"])
-            return
-
-        include_uppercase = get_yes_no_input("Include uppercase letters? (yes/no): ")
-        include_lowercase = get_yes_no_input("Include lowercase letters? (yes/no): ")
-        include_numbers = get_yes_no_input("Include numbers? (yes/no): ")
-        include_symbols = get_yes_no_input("Include symbols? (yes/no): ")
-
-        separate_files = get_yes_no_input("Do you want to separate your file? (yes/no): ")
-        if separate_files:
-            num_files = int(input("How many files do you want to create? "))
-        else:
-            num_files = 1
-
-        file_name = input("Name of file to store the password (press Enter for default 'password.txt'): ").strip()
-        if file_name == "":
-            file_name = "password.txt"
-
-        num_passwords = int(input("How many passwords do you want to create? "))
-
-        generate_passwords(length, include_uppercase, include_lowercase, include_numbers, include_symbols,
-                           num_passwords, separate_files, num_files, file_name)
-
-    except ValueError:
-        print(ERROR_MESSAGE["TooSmall"])
-    except IOError:
-        print("Unable to create the file.")
+    except IOError as e:
+        print(ERROR_MESSAGE["FileCreationError"], e)
 
 
 if __name__ == "__main__":
-    generate_passwords_cli()
+    main()
