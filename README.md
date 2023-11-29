@@ -42,3 +42,5 @@ To run the GUI version (`passwordGenGUI.py`), execute the following command:
 
 ```bash
 python passwordGenGUI.py
+```
+This project is licensed under the [MIT](https://en.wikipedia.org/wiki/MIT_License) License - see the LICENSE file for details
