@@ -1,4 +1,4 @@
-# PasswordGenCLI
+# Password Generator
 
 This repository includes scripts to generate random passwords based on specified criteria, available in both command-line interface (CLI) and graphical user interface (GUI) versions.
 
@@ -6,6 +6,7 @@ This repository includes scripts to generate random passwords based on specified
 
 ### Prerequisites
 - Python 3.x installed
+- Required packages: `argparse`, `os`, `random`, `string`, `tarfile`
 
 ### Running the Scripts
 
@@ -41,5 +42,3 @@ To run the GUI version (`passwordGenGUI.py`), execute the following command:
 
 ```bash
 python passwordGenGUI.py
-```
-This project is licensed under the [MIT](https://en.wikipedia.org/wiki/MIT_License) License - see the LICENSE file for details.
