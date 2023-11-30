@@ -5,7 +5,7 @@ This repository includes scripts to generate random passwords based on specified
 ## Usage
 
 ### Prerequisites
-- Python 3.x installed
+- [Python 3.x](https://www.python.org/downloads/) installed
 - Required packages: `argparse`, `os`, `random`, `string`, `tarfile`
 
 ### Running the Scripts
