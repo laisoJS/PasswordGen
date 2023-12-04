@@ -1,4 +1,4 @@
-# Password Generator
+# Wordlist Generator
 
 This repository includes scripts to generate random passwords based on specified criteria, available in both command-line interface (CLI) and graphical user interface (GUI) versions.
 
@@ -12,17 +12,17 @@ This repository includes scripts to generate random passwords based on specified
 
 1. **Clone the repository:**
     ```bash
-    git clone https://github.com/laisoJs/PasswordGen.git
+    git clone https://github.com/laisoJs/wordlistGen.git
     ```
 
 2. **Navigate to the directory:**
     ```bash
-    cd PasswordGen
+    cd wordlistGen
     ```
 
 3. **Run the CLI script with required arguments:**
     ```bash
-    python passwordGenCLI.py [-h] [-l LENGTH] [-u] [-w] [-n] [-s] [-q QUANTITY] [-o OUTPUT] [--sep SEP] [-z]
+    python wordlistGenCLI.py [-h] [-l LENGTH] [-u] [-w] [-n] [-s] [-q QUANTITY] [-o OUTPUT] [--sep SEP] [-z]
     ```
     #### Arguments
     - `-h`, `--help`: Show help message and exit.
@@ -38,9 +38,9 @@ This repository includes scripts to generate random passwords based on specified
 
 ### Running the GUI
 
-To run the GUI version (`passwordGenGUI.py`), execute the following command:
+To run the GUI version (`wordlistGenGUI.py`), execute the following command:
 
 ```bash
-python passwordGenGUI.py
+python wordlistGenGUI.py
 ```
 This project is licensed under the [MIT](https://en.wikipedia.org/wiki/MIT_License) License - see the LICENSE file for details
